@@ -7,12 +7,10 @@ DUMMYJSON = "https://dummyjson.com"
 TIMEOUT = 10.0
 CACHE_SECONDS = 300
 
-# "Stock on products" is shown as a restock watchlist, not a full inventory dump:
-# the items closest to running out are the ones that need action. A table with
-# every SKU would bury that signal and isn't actionable in a dashboard widget.
+# Restock watchlist size, not a full inventory dump — see README.
 STOCK_WATCHLIST_SIZE = 20
 
-# DummyJSON also ships password, ssn, bank, crypto. Never request those.
+# select= keeps password/ssn/bank/crypto out of the response entirely.
 USER_FIELDS = "firstName,lastName,age,gender,image,role,address,university"
 PRODUCT_FIELDS = "title,brand,category,price,stock,reviews"
 
@@ -105,7 +103,6 @@ def build_products(products: list) -> dict:
         prices_by_category[category].append(price)
         stock_rows.append({"title": title, "stock": stock})
 
-        # "available" = currently sellable. Categories with nothing in stock stay at 0.
         available_by_category[category] += 1 if stock > 0 else 0
 
         brand = product.get("brand")
@@ -121,8 +118,7 @@ def build_products(products: list) -> dict:
     for category, prices in prices_by_category.items():
         price_ranges[category] = round(max(prices) - min(prices), 2) if prices else 0
 
-    # Mean rating first. A single 5-star review must not beat a brand with the
-    # same average and many more reviews.
+    # tie-break: same avg rating, more reviews wins
     ranked = sorted(
         brand_ratings.items(),
         key=lambda item: (_avg(item[1]), len(item[1])),
@@ -130,7 +126,6 @@ def build_products(products: list) -> dict:
     )
     top_brands = {brand: _avg(ratings) for brand, ratings in ranked[:5]}
 
-    # Lowest stock first: the useful view is what is about to run out.
     stock_rows.sort(key=lambda row: (row["stock"], row["title"]))
 
     return {

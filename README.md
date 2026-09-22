@@ -29,8 +29,6 @@ npm run dev
 
 Open http://localhost:5173
 
-Or: `docker compose up --build`
-
 Checks for the aggregations (no network):
 
 ```bash

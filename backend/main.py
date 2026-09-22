@@ -21,13 +21,11 @@ app.add_middleware(
 )
 
 
-# DummyJSON is unreachable, times out, or answers with a non-2xx status.
 @app.exception_handler(HTTPError)
 async def upstream_unreachable(request: Request, exc: HTTPError) -> JSONResponse:
     return JSONResponse(status_code=502, content={"detail": "Could not reach DummyJSON"})
 
 
-# DummyJSON answered but the body was not valid JSON (e.g. an HTML error page).
 @app.exception_handler(json.JSONDecodeError)
 async def upstream_bad_payload(request: Request, exc: json.JSONDecodeError) -> JSONResponse:
     return JSONResponse(status_code=502, content={"detail": "DummyJSON returned an invalid response"})
